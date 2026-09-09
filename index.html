@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>240</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #000000;
+            --bg-card: #0a0a0a;
+            --bg-editor: #050505;
+            --border-subtle: #262626;
+            --border-focus: #737373;
+            --text-main: #ffffff;
+            --text-muted: #a3a3a3;
+            --accent: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        input, textarea {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 32px 32px;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .topbar {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: #171717;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 800;
+            font-size: 0.95rem;
+            color: #ffffff;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .brand h1 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            color: #ffffff;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            padding: 0.4rem 0.9rem;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .led {
+            width: 7px;
+            height: 7px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+            animation: pulse-led 2s infinite;
+        }
+
+        @keyframes pulse-led {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(0.85); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .wrap {
+            position: relative;
+            z-index: 10;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            width: 100%;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .editors {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media(max-width: 900px) {
+            .editors {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .editor {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+        }
+
+        .editor-head {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: rgba(10, 10, 10, 0.8);
+            border-bottom: 1px solid var(--border-subtle);
+            gap: 0.5rem;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .dot.red { background-color: #404040; }
+        .dot.yellow { background-color: #525252; }
+        .dot.green { background-color: #737373; }
+
+        .editor-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-left: 0.5rem;
+            flex-grow: 1;
+            letter-spacing: 0.05em;
+        }
+
+        .out-meta {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .code-area {
+            display: flex;
+            background: var(--bg-editor);
+            height: 400px;
+            position: relative;
+        }
+
+        .gutter {
+            width: 46px;
+            background: rgba(0, 0, 0, 0.6);
+            border-right: 1px solid var(--border-subtle);
+            padding: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #525252;
+            text-align: right;
+            user-select: none;
+            overflow-y: hidden;
+            line-height: 1.5;
+        }
+
+        .gutter div {
+            padding-right: 12px;
+        }
+
+        textarea {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #e5e5e5;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            padding: 1rem;
+            resize: none;
+            line-height: 1.5;
+            white-space: pre;
+            overflow-wrap: normal;
+            overflow-x: auto;
+        }
+
+        textarea::placeholder {
+            color: #525252;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            padding: 0.5rem 0;
+        }
+
+        .btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-card);
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            border-color: var(--border-focus);
+            background: #171717;
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn.primary {
+            background: #ffffff;
+            border-color: #ffffff;
+            color: #000000;
+        }
+
+        .btn.primary:hover {
+            background: #d4d4d4;
+            border-color: #d4d4d4;
+        }
+
+        .btn.small {
+            padding: 0.3rem 0.6rem;
+            font-size: 0.7rem;
+            border-radius: 4px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            color: #fff;
+            padding: 0.85rem 1.25rem;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            z-index: 100;
+            transform: translateY(150%);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .loader-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(16px);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .loader-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .loader-ring {
+            width: 50px;
+            height: 50px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loader-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+            text-align: center;
+        }
+
+        #verifyScreen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-base);
+            z-index: 300;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            transition: opacity 0.3s ease;
+        }
+
+        .verify-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            max-width: 400px;
+            width: 100%;
+            padding: 2.5rem;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+        }
+
+        .verify-card h2 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .verify-card p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        #securityModal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.98);
+            backdrop-filter: blur(20px);
+            z-index: 400;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        #securityModal.hidden {
+            display: none;
+        }
+
+        .security-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-focus);
+            border-radius: 16px;
+            max-width: 420px;
+            width: 100%;
+            padding: 2.5rem;
+            text-align: center;
+            box-shadow: 0 0 60px rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="verifyScreen">
+        <div class="verify-card">
+            <h2>SECURITY GATEWAY</h2>
+            <p>ANTI-BOT & DEVTOOLS SHIELD ACTIVE<br>กรุณายืนยันตัวตนเพื่อเข้าสู่สตูดิโอ</p>
+            <button type="button" id="btnVerifyHuman" class="btn primary" style="width: 100%; justify-content: center;">
+                ยืนยันตัวตนว่าเป็นมนุษย์
+            </button>
+        </div>
+    </div>
+
+    <div id="securityModal" class="hidden">
+        <div class="security-box">
+            <h3 style="font-family: 'JetBrains Mono', monospace; font-size: 1rem; color: #ffffff;">ตรวจพบความพยายามตรวจสอบซอร์สโค้ด</h3>
+            <p id="modalMessage" style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-muted); line-height: 1.6;">
+                ระบบป้องกันความปลอดภัยได้บล็อกการเข้าถึงเพื่อป้องกันการดึงโค้ดต้นฉบับผ่าน Address Bar หรือ Developer Tools
+            </p>
+            <button onclick="dismissSecurityModal()" class="btn primary" style="justify-content: center;">
+                รับทราบและกลับสู่หน้าหลัก
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-grid"></div>
+
+    <header class="topbar">
+        <div class="brand">
+            <span class="logo">240</span>
+            <h1>Lua Obfuscator</h1>
+        </div>
+        <div class="status" id="statusLed">
+            <span class="led"></span>
+            <span id="statusText">พร้อมใช้งาน</span>
+        </div>
+    </header>
+
+    <main class="wrap">
+        <section class="editors">
+            <!-- Input Editor -->
+            <div class="editor">
+                <div class="editor-head">
+                    <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                    <span class="editor-title">โค้ดดิบ (Input)</span>
+                    <button class="btn small" id="btnSample">ตัวอย่าง</button>
+                    <button class="btn small" id="btnClear">ล้าง</button>
+                </div>
+                <div class="code-area">
+                    <div class="gutter" id="inGutter"></div>
+                    <textarea id="inCode" spellcheck="false" placeholder="-- วางโค้ด Lua ของคุณตรงนี้..."></textarea>
+                </div>
+            </div>
+
+            <!-- Output Editor -->
+            <div class="editor">
+                <div class="editor-head">
+                    <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                    <span class="editor-title">โค้ดที่เข้ารหัสแล้ว (Output)</span>
+                    <span class="out-meta" id="outMeta">0 lines</span>
+                </div>
+                <div class="code-area">
+                    <div class="gutter" id="outGutter"></div>
+                    <textarea id="outCode" spellcheck="false" readonly placeholder="-- ผลลัพธ์จะแสดงตรงนี้..."></textarea>
+                </div>
+            </div>
+        </section>
+
+        <section class="actions">
+            <button class="btn primary" id="btnObfuscate">เข้ารหัสสคริปต์</button>
+            <button class="btn" id="btnCopy">คัดลอกโค้ด</button>
+            <button class="btn" id="btnDownload">ดาวน์โหลดไฟล์ .lua</button>
+        </section>
+    </main>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="loader-overlay" id="loaderOverlay">
+        <div class="loader-ring"></div>
+        <div class="loader-text" id="loaderText">กำลังเข้ารหัสสคริปต์...</div>
+    </div>
+
+    <script>
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            triggerSecurityViolation("ไม่อนุญาตให้คลิกขวาหรือดึงข้อมูลโครงสร้างเว็บไซต์");
+            return false;
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (
+                e.keyCode === 123 || // F12
+                (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || // Ctrl+Shift+I, J, C
+                (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 80)) // Ctrl+U, S, P
+            ) {
+                e.preventDefault();
+                triggerSecurityViolation("ตรวจพบการพยายามใช้คีย์ลัดตรวจสอบซอร์สโค้ดผ่าน Address/DevTools Shield");
+                return false;
+            }
+        });
+
+        (function() {
+            let devtoolsOpen = false;
+            const threshold = 160;
+
+            const checkDevTools = function() {
+                const widthDiff = window.outerWidth - window.innerWidth > threshold;
+                const heightDiff = window.outerHeight - window.innerHeight > threshold;
+                if ((widthDiff || heightDiff) && !devtoolsOpen) {
+                    devtoolsOpen = true;
+                    triggerSecurityViolation("ตรวจพบการเปิดใช้งาน Developer Tools หรือหน้าต่างตรวจสอบโค้ดจากเบราว์เซอร์");
+                }
+            };
+
+            setInterval(checkDevTools, 500);
+
+            setInterval(function() {
+                const start = performance.now();
+                debugger;
+                const end = performance.now();
+                if (end - start > 100) {
+                    triggerSecurityViolation("ตรวจพบนโยบายหยุดพักการทำงานผ่าน Debugger ตรวจจับการดึงโค้ด");
+                }
+            }, 1000);
+        })();
+
+        function triggerSecurityViolation(msg) {
+            document.getElementById('modalMessage').textContent = msg + " ระบบได้ระงับการทำงานเพื่อความปลอดภัย";
+            document.getElementById('securityModal').classList.remove('hidden');
+        }
+
+        function dismissSecurityModal() {
+            document.getElementById('securityModal').classList.add('hidden');
+        }
+
+        document.getElementById('btnVerifyHuman').addEventListener('click', function() {
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = 'กำลังตรวจสอบสถานะความเป็นมนุษย์...';
+            setTimeout(() => {
+                const screen = document.getElementById('verifyScreen');
+                screen.style.opacity = '0';
+                setTimeout(() => {
+                    screen.style.display = 'none';
+                }, 300);
+            }, 800);
+        });
+
+        function updateGutters(textareaId, gutterId, metaId) {
+            const ta = document.getElementById(textareaId);
+            const gutter = document.getElementById(gutterId);
+            const lines = ta.value.split('\n').length;
+            
+            let html = '';
+            for (let i = 1; i <= Math.max(lines, 1); i++) {
+                html += `<div>${i}</div>`;
+            }
+            gutter.innerHTML = html;
+
+            if (metaId) {
+                document.getElementById(metaId).textContent = `${lines} lines`;
+            }
+        }
+
+        const inCode = document.getElementById('inCode');
+        const outCode = document.getElementById('outCode');
+
+        inCode.addEventListener('input', () => updateGutters('inCode', 'inGutter', null));
+        outCode.addEventListener('input', () => updateGutters('outCode', 'outGutter', 'outMeta'));
+
+        inCode.addEventListener('scroll', () => {
+            document.getElementById('inGutter').scrollTop = inCode.scrollTop;
+        });
+        outCode.addEventListener('scroll', () => {
+            document.getElementById('outGutter').scrollTop = outCode.scrollTop;
+        });
+
+        updateGutters('inCode', 'inGutter', null);
+        updateGutters('outCode', 'outGutter', 'outMeta');
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        const ALPHABET = "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+        const ALPHA_LEN = ALPHABET.length;
+
+        function randomBytes(length) {
+            const result = new Uint8Array(length);
+            if (window.crypto && typeof window.crypto.getRandomValues === "function") {
+                window.crypto.getRandomValues(result);
+            } else {
+                for (let i = 0; i < length; i++) {
+                    result[i] = Math.floor(Math.random() * 256);
+                }
+            }
+            return result;
+        }
+
+        function xorByte(a, b) {
+            return (a ^ b) & 255;
+        }
+
+        function encodePrintable(bytes) {
+            let result = "";
+            for (let i = 0; i < bytes.length; i++) {
+                const val = bytes[i];
+                result += ALPHABET[Math.floor(val / ALPHA_LEN)] + ALPHABET[val % ALPHA_LEN];
+            }
+            return result;
+        }
+
+        function encryptChunk(bytes, key, seed) {
+            const result = new Uint8Array(bytes.length);
+            for (let i = 0; i < bytes.length; i++) {
+                const k1 = key[(i + seed) % key.length];
+                const k2 = key[(i * 11 + seed + 7) % key.length];
+                const mask = (seed + i * 29 + i * i * 17 + 73) & 255;
+                let val = xorByte(bytes[i], k1);
+                val = xorByte(val, k2);
+                val = xorByte(val, mask);
+                result[i] = val;
+            }
+            return result;
+        }
+
+        function splitBytes(bytes, size) {
+            const res = [];
+            for (let i = 0; i < bytes.length; i += size) {
+                res.push(bytes.slice(i, Math.min(i + size, bytes.length)));
+            }
+            return res;
+        }
+
+        function generateUniqueLuaDecoys() {
+            const luaKeywords = ["env", "ctx", "registry", "cache", "vector", "matrix", "proxy", "session", "node", "buffer", "pointer", "segment", "payload", "handler", "instance", "routine", "signature", "slot", "cluster", "hash"];
+            const functionNames = ["initEnv", "verifyState", "checkBuffer", "parseCache", "validateToken", "loadVector", "dispatchProxy", "buildTable", "compileMeta", "fetchCrypto", "allocSlot", "resolveNode", "computeHash", "verifyPtr", "executeChunk", "initVM", "execRoutine", "verifyFlag", "syncRegistry", "assertSecure"];
+            
+            let statements = [];
+            const count = 90 + Math.floor(Math.random() * 50);
+            const saltKey = Math.floor(Math.random() * 99999999);
+            
+            for (let i = 0; i < count; i++) {
+                const kw = luaKeywords[Math.floor(Math.random() * luaKeywords.length)];
+                const fn = functionNames[Math.floor(Math.random() * functionNames.length)] + "_" + (saltKey + i * 37) % 999999;
+                const vn = kw + "_" + (saltKey + i * 53) % 999999;
+                const randVal = Math.floor(Math.random() * 100000);
+                
+                const variant = i % 5;
+                if (variant === 0) {
+                    statements.push(`local function ${fn}(x, y) local ${vn} = (x * ${randVal}) + (y or 1); return setmetatable({v = ${vn}}, {__index = function(t, k) return rawget(t, k) or "${kw}_val_${i}" end}) end`);
+                } else if (variant === 1) {
+                    statements.push(`local ${vn} = { status = true, timestamp = os.time(), code = "${fn}", salt = ${randVal + i}, mode = "${kw}" }`);
+                } else if (variant === 2) {
+                    statements.push(`local function ${fn}() local ${vn} = {}; for i = 1, 12 do ${vn}[i] = i * ${randVal % 19 + 1} end return ${vn} end`);
+                } else if (variant === 3) {
+                    statements.push(`local ${vn} = setmetatable({name = "${kw}_${i}"}, { __mode = "kv", __call = function(self, ...) return "${fn}" end })`);
+                } else {
+                    statements.push(`local ${vn} = (function() local t = {} t.id = ${randVal + i} t.type = "${kw}" return t end)()`);
+                }
+            }
+            return statements.join(";");
+        }
+
+        function buildLuaLoader(parts) {
+            const payload = parts.map(p => `{d=${JSON.stringify(p.data)},k=${JSON.stringify(p.key)},s=${p.seed},o=${p.order}}`).join(",");
+            const alphabetLua = JSON.stringify(ALPHABET);
+            const decoysStr = generateUniqueLuaDecoys();
+
+            const loader = `return (function(...) local h1={${payload}};local h2="";local h3=${alphabetLua};${decoysStr};local h4=function(a,b)local r=0;local p=1;while a>0 or b>0 do local x=a%2;local y=b%2;if x~=y then r=r+p end;a=math.floor(a/2);b=math.floor(b/2);p=p*2 end;return r end;local h5=function(s)local t={};for i=1,#s do local c=string.sub(s,i,i);local v=string.find(h3,c,1,true);if not v then return nil end;t[#t+1]=v-1 end;local o={};for i=1,#t,2 do local a=t[i];local b=t[i+1];if b==nil then return nil end;o[#o+1]=a*${ALPHA_LEN}+b end;return o end;table.sort(h1,function(a,b)return a.o<b.o end);for h6=1,#h1 do local h7=h1[h6];local h8=h5(h7.d);local h9=h5(h7.key);if not h8 or not h9 then error("Invalid") end;local h10=h7.s;for h11=1,#h8 do local h12=h9[((h11-1+h10)%#h9)+1];local h13=h9[(((h11-1)*11+h10+7)%#h9)+1];local h14=(h10+(h11-1)*29+(h11-1)*(h11-1)*17+73)%256;local h15=h4(h8[h11],h12);h15=h4(h15,h13);h15=h4(h15,h14);h2=h2..string.char(h15) end end;local h16=loadstring or load;local h17,h18=h16(h2);if not h17 then error(tostring(h18)) end;return h17(...) end)(...)`;
+            return loader.trim();
+        }
+
+        document.getElementById('btnSample').addEventListener('click', () => {
+            inCode.value = `-- 240 STUDIO Sample Script\nlocal player = game.Players.LocalPlayer\nprint("Hello, " .. player.Name .. "!")\n\nlocal function calculateScore(a, b)\n    return (a * 2) + (b * 3)\nend\n\nprint("Score result:", calculateScore(10, 25))`;
+            updateGutters('inCode', 'inGutter', null);
+            showToast("โหลดตัวอย่างโค้ดเรียบร้อยแล้ว");
+        });
+
+        document.getElementById('btnClear').addEventListener('click', () => {
+            inCode.value = '';
+            outCode.value = '';
+            updateGutters('inCode', 'inGutter', null);
+            updateGutters('outCode', 'outGutter', 'outMeta');
+            showToast("ล้างข้อมูลเรียบร้อย");
+        });
+
+        document.getElementById('btnObfuscate').addEventListener('click', () => {
+            const raw = inCode.value;
+            if (!raw.trim()) {
+                showToast("กรุณาวางโค้ด Lua ก่อนเข้ารหัส");
+                return;
+            }
+
+            const loaderOverlay = document.getElementById('loaderOverlay');
+            const loaderText = document.getElementById('loaderText');
+            
+            loaderOverlay.classList.add('active');
+            loaderText.textContent = "กำลังวิเคราะห์โค้ดและสร้างสคริปต์ป้องกัน...";
+
+            setTimeout(() => {
+                try {
+                    const sourceBytes = new TextEncoder().encode(raw);
+                    const chunks = splitBytes(sourceBytes, 24);
+                    const parts = [];
+
+                    for (let i = 0; i < chunks.length; i++) {
+                        const chunk = chunks[i];
+                        const key = randomBytes(Math.max(48, chunk.length + 16));
+                        const seed = Math.floor(Math.random() * 0x7fffffff);
+                        const encrypted = encryptChunk(chunk, key, seed);
+
+                        parts.push({
+                            data: encodePrintable(encrypted),
+                            key: encodePrintable(key),
+                            seed: seed,
+                            order: i
+                        });
+                    }
+
+                    const loader = buildLuaLoader(parts);
+                    
+                    const asciiBanner = [
+                        "--  ██╗    ██╗      ██████╗ ██╗   ██╗███████╗    ██╗  ██╗███████╗███████╗",
+                        "--  ██║    ██║     ██╔═══██╗██║   ██║██╔════╝    ██║  ██║██╔════╝██╔════╝",
+                        "--  ██║    ██║     ██║   ██║██║   ██║█████╗      ███████║█████╗  █████╗  ",
+                        "--  ██║    ██║     ██║   ██║╚██╗ ██╔╝██╔══╝      ██╔══██║██╔══╝  ██╔══╝  ",
+                        "--  ██║    ███████╗╚██████╔╝ ╚████╔╝  ███████╗    ██║  ██║███████╗███████╗",
+                        "--                                BY240                                  "
+                    ].join("\n");
+
+                    outCode.value = asciiBanner + "\n\n" + loader;
+                    updateGutters('outCode', 'outGutter', 'outMeta');
+                    showToast("เข้ารหัสสคริปต์สำเร็จ");
+                    loaderOverlay.classList.remove('active');
+                } catch (err) {
+                    console.error(err);
+                    showToast("เกิดข้อผิดพลาดในการเข้ารหัส");
+                    loaderOverlay.classList.remove('active');
+                }
+            }, 800);
+        });
+
+        document.getElementById('btnCopy').addEventListener('click', () => {
+            const val = outCode.value;
+            if (!val) {
+                showToast("ไม่มีโค้ดผลลัพธ์ให้คัดลอก");
+                return;
+            }
+            const temp = document.createElement('textarea');
+            temp.value = val;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            showToast("คัดลอกโค้ดลงคลิปบอร์ดเรียบร้อยแล้ว");
+        });
+
+        document.getElementById('btnDownload').addEventListener('click', () => {
+            const val = outCode.value;
+            if (!val) {
+                showToast("ไม่มีไฟล์ผลลัพธ์ให้ดาวน์โหลด");
+                return;
+            }
+            const blob = new Blob([val], { type: "text/plain;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "Protected_240_" + Math.floor(Math.random() * 10000) + ".lua";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast("ดาวน์โหลดไฟล์ .lua เรียบร้อยแล้ว");
+        });
+    </script>
+</body>
+</html>
+            const payload = parts.map(p => `{d=${JSON.stringify(p.data)},k=${JSON.stringify(p.key)},s=${p.seed},o=${p.order}}`).join(",");
+            const alphabetLua = JSON.stringify(ALPHABET);
+            const decoysStr = generateDecoys();
+
+            const loader = `return (function(...) local h1={${payload}};local h2="";local h3=${alphabetLua};${decoysStr};local h4=function(a,b)local r=0;local p=1;while a>0 or b>0 do local x=a%2;local y=b%2;if x~=y then r=r+p end;a=math.floor(a/2);b=math.floor(b/2);p=p*2 end;return r end;local h5=function(s)local t={};for i=1,#s do local c=string.sub(s,i,i);local v=string.find(h3,c,1,true);if not v then return nil end;t[#t+1]=v-1 end;local o={};for i=1,#t,2 do local a=t[i];local b=t[i+1];if b==nil then return nil end;o[#o+1]=a*${ALPHA_LEN}+b end;return o end;table.sort(h1,function(a,b)return a.o<b.o end);for h6=1,#h1 do local h7=h1[h6];local h8=h5(h7.d);local h9=h5(h7.key);if not h8 or not h9 then error("Invalid") end;local h10=h7.s;for h11=1,#h8 do local h12=h9[((h11-1+h10)%#h9)+1];local h13=h9[(((h11-1)*11+h10+7)%#h9)+1];local h14=(h10+(h11-1)*29+(h11-1)*(h11-1)*17+73)%256;local h15=h4(h8[h11],h12);h15=h4(h15,h13);h15=h4(h15,h14);h2=h2..string.char(h15) end end;local h16=loadstring or load;local h17,h18=h16(h2);if not h17 then error(tostring(h18)) end;return h17(...) end)(...)`;
+            return loader.trim();
+        }
+
+        // --- 6. BUTTON HANDLERS WITH STEPPED LOADING SCREEN ---
+        document.getElementById('btnSample').addEventListener('click', () => {
+            inCode.value = `-- 240 STUDIO Sample Script\nlocal player = game.Players.LocalPlayer\nprint("Hello, " .. player.Name .. "!")\n\nlocal function calculateScore(a, b)\n    return (a * 2) + (b * 3)\nend\n\nprint("Score result:", calculateScore(10, 25))`;
+            updateGutters('inCode', 'inGutter', null);
+            showToast("โหลดตัวอย่างโค้ดเรียบร้อยแล้ว");
+        });
+
+        document.getElementById('btnClear').addEventListener('click', () => {
+            inCode.value = '';
+            outCode.value = '';
+            updateGutters('inCode', 'inGutter', null);
+            updateGutters('outCode', 'outGutter', 'outMeta');
+            showToast("ล้างข้อมูลเรียบร้อย");
+        });
+
+        document.getElementById('btnObfuscate').addEventListener('click', () => {
+            const raw = inCode.value;
+            if (!raw.trim()) {
+                showToast("กรุณาวางโค้ด Lua ก่อนเข้ารหัส");
+                return;
+            }
+
+            const loaderEl = document.getElementById('luraphLoader');
+            const loaderText = document.getElementById('loaderText');
+            const progressFill = document.getElementById('loaderProgressFill');
+            
+            loaderEl.classList.add('active');
+            progressFill.style.width = '10%';
+            loaderText.textContent = "กำลังวิเคราะห์โครงสร้างโค้ดและแยกบล็อกข้อมูล...";
+
+            setTimeout(() => {
+                progressFill.style.width = '40%';
+                loaderText.textContent = "กำลังสร้างคีย์เข้ารหัสสุ่มระดับสูง...";
+                
+                setTimeout(() => {
+                    progressFill.style.width = '70%';
+                    loaderText.textContent = "กำลังเข้ารหัสสคริปต์และสร้างตัวถอดรหัส...";
+
+                    setTimeout(() => {
+                        try {
+                            const sourceBytes = new TextEncoder().encode(raw);
+                            const chunks = splitBytes(sourceBytes, 24);
+                            const parts = [];
+
+                            for (let i = 0; i < chunks.length; i++) {
+                                const chunk = chunks[i];
+                                const key = randomBytes(Math.max(48, chunk.length + 16));
+                                const seed = Math.floor(Math.random() * 0x7fffffff);
+                                const encrypted = encryptChunk(chunk, key, seed);
+
+                                parts.push({
+                                    data: encodePrintable(encrypted),
+                                    key: encodePrintable(key),
+                                    seed: seed,
+                                    order: i
+                                });
+                            }
+
+                            const loader = buildLuaLoader(parts);
+                            
+                            const asciiBanner = [
+                                "--  ██╗ ██████╗ ██╗   ██╗ ███████╗      ██╗  ██╗ ███████╗ ███████╗",
+                                "--  ██║ ██╔══██╗██║   ██║ ██╔════╝      ██║  ██║ ██╔════╝ ██╔════╝",
+                                "--  ██║ ██║  ██║██║   ██║ █████╗        ███████║ █████╗   █████╗  ",
+                                "--  ██║ ██║  ██║██║   ██║ ██╔══╝        ██╔══██║ ██╔══╝   ██╔══╝  ",
+                                "--  ██║ ██████╔╝╚██████╔╝ ███████╗      ██║  ██║ ███████╗ ███████╗",
+                                "--  ╚═╝ ╚═════╝  ╚═════╝  ╚══════╝      ╚═╝  ╚═╝ ╚══════╝ ╚══════╝",
+                                "--                                    BY240                                    "
+                            ].join("\n");
+
+                            progressFill.style.width = '100%';
+                            loaderText.textContent = "เข้ารหัสสำเร็จเรียบร้อย!";
+
+                            setTimeout(() => {
+                                outCode.value = asciiBanner + "\n\n" + loader;
+                                updateGutters('outCode', 'outGutter', 'outMeta');
+                                showToast("เข้ารหัสสคริปต์สำเร็จด้วย Strict H");
+                                loaderEl.classList.remove('active');
+                            }, 300);
+                        } catch (err) {
+                            console.error(err);
+                            showToast("เกิดข้อผิดพลาดในการเข้ารหัส");
+                            loaderEl.classList.remove('active');
+                        }
+                    }, 400);
+                }, 400);
+            }, 400);
+        });
+
+        document.getElementById('btnCopy').addEventListener('click', () => {
+            const val = outCode.value;
+            if (!val) {
+                showToast("ไม่มีโค้ดผลลัพธ์ให้คัดลอก");
+                return;
+            }
+            const temp = document.createElement('textarea');
+            temp.value = val;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            showToast("คัดลอกโค้ดลงคลิปบอร์ดเรียบร้อยแล้ว");
+        });
+
+        document.getElementById('btnDownload').addEventListener('click', () => {
+            const val = outCode.value;
+            if (!val) {
+                showToast("ไม่มีไฟล์ผลลัพธ์ให้ดาวน์โหลด");
+                return;
+            }
+            const blob = new Blob([val], { type: "text/plain;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "Protected_240_" + Math.floor(Math.random() * 10000) + ".lua";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast("ดาวน์โหลดไฟล์ .lua เรียบร้อยแล้ว");
+        });
+    </script>
+</body>
+</html>
