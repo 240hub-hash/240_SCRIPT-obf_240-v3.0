@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>240</title>
+    <title>240 Studio - Lua Obfuscator</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -13,7 +13,7 @@
             --border-subtle: #262626;
             --border-focus: #737373;
             --text-main: #ffffff;
-            --text-muted: #a3a3a3;
+            --text-muted: #737373;
             --accent: #ffffff;
         }
 
@@ -51,8 +51,8 @@
             width: 100vw;
             height: 100vh;
             background-image: 
-                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+                linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
             background-size: 32px 32px;
             z-index: 0;
             pointer-events: none;
@@ -361,6 +361,21 @@
             text-align: center;
         }
 
+        .loader-progress-bar {
+            width: 200px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .loader-progress-fill {
+            width: 0%;
+            height: 100%;
+            background: #ffffff;
+            transition: width 0.3s ease;
+        }
+
         #verifyScreen {
             position: fixed;
             inset: 0;
@@ -470,7 +485,6 @@
 
     <main class="wrap">
         <section class="editors">
-            <!-- Input Editor -->
             <div class="editor">
                 <div class="editor-head">
                     <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
@@ -484,7 +498,6 @@
                 </div>
             </div>
 
-            <!-- Output Editor -->
             <div class="editor">
                 <div class="editor-head">
                     <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
@@ -509,6 +522,9 @@
 
     <div class="loader-overlay" id="loaderOverlay">
         <div class="loader-ring"></div>
+        <div class="loader-progress-bar">
+            <div class="loader-progress-fill" id="loaderProgressFill"></div>
+        </div>
         <div class="loader-text" id="loaderText">กำลังเข้ารหัสสคริปต์...</div>
     </div>
 
@@ -521,9 +537,9 @@
 
         document.addEventListener('keydown', function(e) {
             if (
-                e.keyCode === 123 || // F12
-                (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || // Ctrl+Shift+I, J, C
-                (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 80)) // Ctrl+U, S, P
+                e.keyCode === 123 || 
+                (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || 
+                (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 80)) 
             ) {
                 e.preventDefault();
                 triggerSecurityViolation("ตรวจพบการพยายามใช้คีย์ลัดตรวจสอบซอร์สโค้ดผ่าน Address/DevTools Shield");
@@ -585,12 +601,12 @@
             
             let html = '';
             for (let i = 1; i <= Math.max(lines, 1); i++) {
-                html += `<div>${i}</div>`;
+                html += '<div>' + i + '</div>';
             }
             gutter.innerHTML = html;
 
             if (metaId) {
-                document.getElementById(metaId).textContent = `${lines} lines`;
+                document.getElementById(metaId).textContent = lines + ' lines';
             }
         }
 
@@ -685,31 +701,31 @@
                 
                 const variant = i % 5;
                 if (variant === 0) {
-                    statements.push(`local function ${fn}(x, y) local ${vn} = (x * ${randVal}) + (y or 1); return setmetatable({v = ${vn}}, {__index = function(t, k) return rawget(t, k) or "${kw}_val_${i}" end}) end`);
+                    statements.push("local function " + fn + "(x, y) local " + vn + " = (x * " + randVal + ") + (y or 1); return setmetatable({v = " + vn + "}, {__index = function(t, k) return rawget(t, k) or \"" + kw + "_val_" + i + "\" end}) end");
                 } else if (variant === 1) {
-                    statements.push(`local ${vn} = { status = true, timestamp = os.time(), code = "${fn}", salt = ${randVal + i}, mode = "${kw}" }`);
+                    statements.push("local " + vn + " = { status = true, timestamp = os.time(), code = \"" + fn + "\", salt = " + (randVal + i) + ", mode = \"" + kw + "\" }");
                 } else if (variant === 2) {
-                    statements.push(`local function ${fn}() local ${vn} = {}; for i = 1, 12 do ${vn}[i] = i * ${randVal % 19 + 1} end return ${vn} end`);
+                    statements.push("local function " + fn + "() local " + vn + " = {}; for i = 1, 12 do " + vn + "[i] = i * " + (randVal % 19 + 1) + " end return " + vn + " end");
                 } else if (variant === 3) {
-                    statements.push(`local ${vn} = setmetatable({name = "${kw}_${i}"}, { __mode = "kv", __call = function(self, ...) return "${fn}" end })`);
+                    statements.push("local " + vn + " = setmetatable({name = \"" + kw + "_" + i + "\"}, { __mode = \"kv\", __call = function(self, ...) return \"" + fn + "\" end })");
                 } else {
-                    statements.push(`local ${vn} = (function() local t = {} t.id = ${randVal + i} t.type = "${kw}" return t end)()`);
+                    statements.push("local " + vn + " = (function() local t = {} t.id = " + (randVal + i) + " t.type = \"" + kw + "\" return t end)()");
                 }
             }
             return statements.join(";");
         }
 
         function buildLuaLoader(parts) {
-            const payload = parts.map(p => `{d=${JSON.stringify(p.data)},k=${JSON.stringify(p.key)},s=${p.seed},o=${p.order}}`).join(",");
+            const payload = parts.map(p => "{d=" + JSON.stringify(p.data) + ",k=" + JSON.stringify(p.key) + ",s=" + p.seed + ",o=" + p.order + "}").join(",");
             const alphabetLua = JSON.stringify(ALPHABET);
             const decoysStr = generateUniqueLuaDecoys();
 
-            const loader = `return (function(...) local h1={${payload}};local h2="";local h3=${alphabetLua};${decoysStr};local h4=function(a,b)local r=0;local p=1;while a>0 or b>0 do local x=a%2;local y=b%2;if x~=y then r=r+p end;a=math.floor(a/2);b=math.floor(b/2);p=p*2 end;return r end;local h5=function(s)local t={};for i=1,#s do local c=string.sub(s,i,i);local v=string.find(h3,c,1,true);if not v then return nil end;t[#t+1]=v-1 end;local o={};for i=1,#t,2 do local a=t[i];local b=t[i+1];if b==nil then return nil end;o[#o+1]=a*${ALPHA_LEN}+b end;return o end;table.sort(h1,function(a,b)return a.o<b.o end);for h6=1,#h1 do local h7=h1[h6];local h8=h5(h7.d);local h9=h5(h7.key);if not h8 or not h9 then error("Invalid") end;local h10=h7.s;for h11=1,#h8 do local h12=h9[((h11-1+h10)%#h9)+1];local h13=h9[(((h11-1)*11+h10+7)%#h9)+1];local h14=(h10+(h11-1)*29+(h11-1)*(h11-1)*17+73)%256;local h15=h4(h8[h11],h12);h15=h4(h15,h13);h15=h4(h15,h14);h2=h2..string.char(h15) end end;local h16=loadstring or load;local h17,h18=h16(h2);if not h17 then error(tostring(h18)) end;return h17(...) end)(...)`;
+            const loader = "return (function(...) local h1={" + payload + "};local h2=\"\";local h3=" + alphabetLua + ";" + decoysStr + ";local h4=function(a,b)local r=0;local p=1;while a>0 or b>0 do local x=a%2;local y=b%2;if x~=y then r=r+p end;a=math.floor(a/2);b=math.floor(b/2);p=p*2 end;return r end;local h5=function(s)local t={};for i=1,#s do local c=string.sub(s,i,i);local v=string.find(h3,c,1,true);if not v then return nil end;t[#t+1]=v-1 end;local o={};for i=1,#t,2 do local a=t[i];local b=t[i+1];if b==nil then return nil end;o[#o+1]=a*" + ALPHA_LEN + "+b end;return o end;table.sort(h1,function(a,b)return a.o<b.o end);for h6=1,#h1 do local h7=h1[h6];local h8=h5(h7.d);local h9=h5(h7.key);if not h8 or not h9 then error(\"Invalid\") end;local h10=h7.s;for h11=1,#h8 do local h12=h9[((h11-1+h10)%#h9)+1];local h13=h9[(((h11-1)*11+h10+7)%#h9)+1];local h14=(h10+(h11-1)*29+(h11-1)*(h11-1)*17+73)%256;local h15=h4(h8[h11],h12);h15=h4(h15,h13);h15=h4(h15,h14);h2=h2..string.char(h15) end end;local h16=loadstring or load;local h17,h18=h16(h2);if not h17 then error(tostring(h18)) end;return h17(...) end)(...)";
             return loader.trim();
         }
 
         document.getElementById('btnSample').addEventListener('click', () => {
-            inCode.value = `-- 240 STUDIO Sample Script\nlocal player = game.Players.LocalPlayer\nprint("Hello, " .. player.Name .. "!")\n\nlocal function calculateScore(a, b)\n    return (a * 2) + (b * 3)\nend\n\nprint("Score result:", calculateScore(10, 25))`;
+            inCode.value = "-- 240 STUDIO Sample Script\nlocal player = game.Players.LocalPlayer\nprint(\"Hello, \" .. player.Name .. \"!\")\n\nlocal function calculateScore(a, b)\n    return (a * 2) + (b * 3)\nend\n\nprint(\"Score result:\", calculateScore(10, 25))";
             updateGutters('inCode', 'inGutter', null);
             showToast("โหลดตัวอย่างโค้ดเรียบร้อยแล้ว");
         });
@@ -731,123 +747,9 @@
 
             const loaderOverlay = document.getElementById('loaderOverlay');
             const loaderText = document.getElementById('loaderText');
-            
-            loaderOverlay.classList.add('active');
-            loaderText.textContent = "กำลังวิเคราะห์โค้ดและสร้างสคริปต์ป้องกัน...";
-
-            setTimeout(() => {
-                try {
-                    const sourceBytes = new TextEncoder().encode(raw);
-                    const chunks = splitBytes(sourceBytes, 24);
-                    const parts = [];
-
-                    for (let i = 0; i < chunks.length; i++) {
-                        const chunk = chunks[i];
-                        const key = randomBytes(Math.max(48, chunk.length + 16));
-                        const seed = Math.floor(Math.random() * 0x7fffffff);
-                        const encrypted = encryptChunk(chunk, key, seed);
-
-                        parts.push({
-                            data: encodePrintable(encrypted),
-                            key: encodePrintable(key),
-                            seed: seed,
-                            order: i
-                        });
-                    }
-
-                    const loader = buildLuaLoader(parts);
-                    
-                    const asciiBanner = [
-                        "--  ██╗    ██╗      ██████╗ ██╗   ██╗███████╗    ██╗  ██╗███████╗███████╗",
-                        "--  ██║    ██║     ██╔═══██╗██║   ██║██╔════╝    ██║  ██║██╔════╝██╔════╝",
-                        "--  ██║    ██║     ██║   ██║██║   ██║█████╗      ███████║█████╗  █████╗  ",
-                        "--  ██║    ██║     ██║   ██║╚██╗ ██╔╝██╔══╝      ██╔══██║██╔══╝  ██╔══╝  ",
-                        "--  ██║    ███████╗╚██████╔╝ ╚████╔╝  ███████╗    ██║  ██║███████╗███████╗",
-                        "--                                BY240                                  "
-                    ].join("\n");
-
-                    outCode.value = asciiBanner + "\n\n" + loader;
-                    updateGutters('outCode', 'outGutter', 'outMeta');
-                    showToast("เข้ารหัสสคริปต์สำเร็จ");
-                    loaderOverlay.classList.remove('active');
-                } catch (err) {
-                    console.error(err);
-                    showToast("เกิดข้อผิดพลาดในการเข้ารหัส");
-                    loaderOverlay.classList.remove('active');
-                }
-            }, 800);
-        });
-
-        document.getElementById('btnCopy').addEventListener('click', () => {
-            const val = outCode.value;
-            if (!val) {
-                showToast("ไม่มีโค้ดผลลัพธ์ให้คัดลอก");
-                return;
-            }
-            const temp = document.createElement('textarea');
-            temp.value = val;
-            document.body.appendChild(temp);
-            temp.select();
-            document.execCommand('copy');
-            document.body.removeChild(temp);
-            showToast("คัดลอกโค้ดลงคลิปบอร์ดเรียบร้อยแล้ว");
-        });
-
-        document.getElementById('btnDownload').addEventListener('click', () => {
-            const val = outCode.value;
-            if (!val) {
-                showToast("ไม่มีไฟล์ผลลัพธ์ให้ดาวน์โหลด");
-                return;
-            }
-            const blob = new Blob([val], { type: "text/plain;charset=utf-8" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = "Protected_240_" + Math.floor(Math.random() * 10000) + ".lua";
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast("ดาวน์โหลดไฟล์ .lua เรียบร้อยแล้ว");
-        });
-    </script>
-</body>
-</html>
-            const payload = parts.map(p => `{d=${JSON.stringify(p.data)},k=${JSON.stringify(p.key)},s=${p.seed},o=${p.order}}`).join(",");
-            const alphabetLua = JSON.stringify(ALPHABET);
-            const decoysStr = generateDecoys();
-
-            const loader = `return (function(...) local h1={${payload}};local h2="";local h3=${alphabetLua};${decoysStr};local h4=function(a,b)local r=0;local p=1;while a>0 or b>0 do local x=a%2;local y=b%2;if x~=y then r=r+p end;a=math.floor(a/2);b=math.floor(b/2);p=p*2 end;return r end;local h5=function(s)local t={};for i=1,#s do local c=string.sub(s,i,i);local v=string.find(h3,c,1,true);if not v then return nil end;t[#t+1]=v-1 end;local o={};for i=1,#t,2 do local a=t[i];local b=t[i+1];if b==nil then return nil end;o[#o+1]=a*${ALPHA_LEN}+b end;return o end;table.sort(h1,function(a,b)return a.o<b.o end);for h6=1,#h1 do local h7=h1[h6];local h8=h5(h7.d);local h9=h5(h7.key);if not h8 or not h9 then error("Invalid") end;local h10=h7.s;for h11=1,#h8 do local h12=h9[((h11-1+h10)%#h9)+1];local h13=h9[(((h11-1)*11+h10+7)%#h9)+1];local h14=(h10+(h11-1)*29+(h11-1)*(h11-1)*17+73)%256;local h15=h4(h8[h11],h12);h15=h4(h15,h13);h15=h4(h15,h14);h2=h2..string.char(h15) end end;local h16=loadstring or load;local h17,h18=h16(h2);if not h17 then error(tostring(h18)) end;return h17(...) end)(...)`;
-            return loader.trim();
-        }
-
-        // --- 6. BUTTON HANDLERS WITH STEPPED LOADING SCREEN ---
-        document.getElementById('btnSample').addEventListener('click', () => {
-            inCode.value = `-- 240 STUDIO Sample Script\nlocal player = game.Players.LocalPlayer\nprint("Hello, " .. player.Name .. "!")\n\nlocal function calculateScore(a, b)\n    return (a * 2) + (b * 3)\nend\n\nprint("Score result:", calculateScore(10, 25))`;
-            updateGutters('inCode', 'inGutter', null);
-            showToast("โหลดตัวอย่างโค้ดเรียบร้อยแล้ว");
-        });
-
-        document.getElementById('btnClear').addEventListener('click', () => {
-            inCode.value = '';
-            outCode.value = '';
-            updateGutters('inCode', 'inGutter', null);
-            updateGutters('outCode', 'outGutter', 'outMeta');
-            showToast("ล้างข้อมูลเรียบร้อย");
-        });
-
-        document.getElementById('btnObfuscate').addEventListener('click', () => {
-            const raw = inCode.value;
-            if (!raw.trim()) {
-                showToast("กรุณาวางโค้ด Lua ก่อนเข้ารหัส");
-                return;
-            }
-
-            const loaderEl = document.getElementById('luraphLoader');
-            const loaderText = document.getElementById('loaderText');
             const progressFill = document.getElementById('loaderProgressFill');
             
-            loaderEl.classList.add('active');
+            loaderOverlay.classList.add('active');
             progressFill.style.width = '10%';
             loaderText.textContent = "กำลังวิเคราะห์โครงสร้างโค้ดและแยกบล็อกข้อมูล...";
 
@@ -856,58 +758,59 @@
                 loaderText.textContent = "กำลังสร้างคีย์เข้ารหัสสุ่มระดับสูง...";
                 
                 setTimeout(() => {
-                    progressFill.style.width = '70%';
-                    loaderText.textContent = "กำลังเข้ารหัสสคริปต์และสร้างตัวถอดรหัส...";
+                    try {
+                        progressFill.style.width = '70%';
+                        loaderText.textContent = "กำลังคอมไพล์สคริปต์และสร้างตัวถอดรหัส...";
 
-                    setTimeout(() => {
-                        try {
-                            const sourceBytes = new TextEncoder().encode(raw);
-                            const chunks = splitBytes(sourceBytes, 24);
-                            const parts = [];
+                        const sourceBytes = new TextEncoder().encode(raw);
+                        const chunks = splitBytes(sourceBytes, 24);
+                        const parts = [];
 
-                            for (let i = 0; i < chunks.length; i++) {
-                                const chunk = chunks[i];
-                                const key = randomBytes(Math.max(48, chunk.length + 16));
-                                const seed = Math.floor(Math.random() * 0x7fffffff);
-                                const encrypted = encryptChunk(chunk, key, seed);
+                        for (let i = 0; i < chunks.length; i++) {
+                            const chunk = chunks[i];
+                            const key = randomBytes(Math.max(48, chunk.length + 16));
+                            const seed = Math.floor(Math.random() * 0x7fffffff);
+                            const encrypted = encryptChunk(chunk, key, seed);
 
-                                parts.push({
-                                    data: encodePrintable(encrypted),
-                                    key: encodePrintable(key),
-                                    seed: seed,
-                                    order: i
-                                });
-                            }
-
-                            const loader = buildLuaLoader(parts);
-                            
-                            const asciiBanner = [
-                                "--  ██╗ ██████╗ ██╗   ██╗ ███████╗      ██╗  ██╗ ███████╗ ███████╗",
-                                "--  ██║ ██╔══██╗██║   ██║ ██╔════╝      ██║  ██║ ██╔════╝ ██╔════╝",
-                                "--  ██║ ██║  ██║██║   ██║ █████╗        ███████║ █████╗   █████╗  ",
-                                "--  ██║ ██║  ██║██║   ██║ ██╔══╝        ██╔══██║ ██╔══╝   ██╔══╝  ",
-                                "--  ██║ ██████╔╝╚██████╔╝ ███████╗      ██║  ██║ ███████╗ ███████╗",
-                                "--  ╚═╝ ╚═════╝  ╚═════╝  ╚══════╝      ╚═╝  ╚═╝ ╚══════╝ ╚══════╝",
-                                "--                                    BY240                                    "
-                            ].join("\n");
-
-                            progressFill.style.width = '100%';
-                            loaderText.textContent = "เข้ารหัสสำเร็จเรียบร้อย!";
-
-                            setTimeout(() => {
-                                outCode.value = asciiBanner + "\n\n" + loader;
-                                updateGutters('outCode', 'outGutter', 'outMeta');
-                                showToast("เข้ารหัสสคริปต์สำเร็จด้วย Strict H");
-                                loaderEl.classList.remove('active');
-                            }, 300);
-                        } catch (err) {
-                            console.error(err);
-                            showToast("เกิดข้อผิดพลาดในการเข้ารหัส");
-                            loaderEl.classList.remove('active');
+                            parts.push({
+                                data: encodePrintable(encrypted),
+                                key: encodePrintable(key),
+                                seed: seed,
+                                order: i
+                            });
                         }
-                    }, 400);
-                }, 400);
-            }, 400);
+
+                        const loader = buildLuaLoader(parts);
+                        
+                        const asciiBanner = [
+                            "--  ██╗    ██╗     ██████╗ ██╗   ██╗███████╗    ██╗  ██╗███████╗███████╗",
+                            "--  ██║    ██║    ██╔═══██╗██║   ██║██╔════╝    ██║  ██║██╔════╝██╔════╝",
+                            "--  ██║    ██║    ██║   ██║██║   ██║█████╗      ███████║█████╗  █████╗  ",
+                            "--  ██║    ██║    ██║   ██║╚██╗ ██╔╝██╔══╝      ██╔══██║██╔══╝  ██╔══╝  ",
+                            "--  ██║    ███████╗╚██████╔╝ ╚████╔╝ ███████╗    ██║  ██║███████╗███████╗",
+                            "--                                                                      ",
+                            "--                                 BY240                                "
+                        ].join("\n");
+
+                        progressFill.style.width = '100%';
+                        loaderText.textContent = "เข้ารหัสสำเร็จเรียบร้อย!";
+
+                        setTimeout(() => {
+                            outCode.value = asciiBanner + "\n\n" + loader;
+                            updateGutters('outCode', 'outGutter', 'outMeta');
+                            showToast("เข้ารหัสสคริปต์สำเร็จ");
+                            loaderOverlay.classList.remove('active');
+                            progressFill.style.width = '0%';
+                        }, 400);
+
+                    } catch (err) {
+                        console.error(err);
+                        showToast("เกิดข้อผิดพลาดในการเข้ารหัส");
+                        loaderOverlay.classList.remove('active');
+                        progressFill.style.width = '0%';
+                    }
+                }, 500);
+            }, 500);
         });
 
         document.getElementById('btnCopy').addEventListener('click', () => {
